@@ -8,9 +8,6 @@
 ============Quantumultx===============
 [task_local]
 #京东炸年兽AR
-0 9 * * * https://raw.githubusercontent.com/LXK9301/jd_scripts/master/jd_nian_ar.js, tag=京东炸年兽AR, img-url=https://raw.githubusercontent.com/yogayyy/Scripts/main/Icon/lxk0301/jd_nian.png, enabled=true
-
-================Loon==============
 [Script]
 cron "0 9 * * *" script-path=https://raw.githubusercontent.com/LXK9301/jd_scripts/master/jd_nian_ar.js,tag=京东炸年兽AR
 
@@ -19,6 +16,18 @@ cron "0 9 * * *" script-path=https://raw.githubusercontent.com/LXK9301/jd_script
 
 ============小火箭=========
 京东炸年兽AR = type=cron,script-path=https://raw.githubusercontent.com/LXK9301/jd_scripts/master/jd_nian_ar.js, cronexpr="0 9 * * *", timeout=3600, enable=true
+=======
+0 9 * * * https://gitee.com/lxk0301/jd_scripts/raw/master/jd_nian_ar.js, tag=京东炸年兽AR, img-url=https://raw.githubusercontent.com/yogayyy/Scripts/main/Icon/lxk0301/jd_nian.png, enabled=true
+
+================Loon==============
+[Script]
+cron "0 9 * * *" script-path=https://gitee.com/lxk0301/jd_scripts/raw/master/jd_nian_ar.js,tag=京东炸年兽AR
+
+===============Surge=================
+京东炸年兽AR = type=cron,cronexp="0 9 * * *",wake-system=1,timeout=36000,script-path=https://gitee.com/lxk0301/jd_scripts/raw/master/jd_nian_ar.js
+
+============小火箭=========
+京东炸年兽AR = type=cron,script-path=https://gitee.com/lxk0301/jd_scripts/raw/master/jd_nian_ar.js, cronexpr="0 9 * * *", timeout=3600, enable=true
  */
 const $ = new Env('京东炸年兽AR');
 
@@ -34,7 +43,7 @@ if ($.isNode()) {
     cookiesArr.push(jdCookieNode[item])
   })
   if (process.env.JD_DEBUG && process.env.JD_DEBUG === 'false') console.log = () => {};
-  if(JSON.stringify(process.env).indexOf('AITHUB')>-1) process.exit(0)
+  if(JSON.stringify(process.env).indexOf('GITHUB')>-1) process.exit(0)
 } else {
   let cookiesData = $.getdata('CookiesJD') || "[]";
   cookiesData = jsonParse(cookiesData);
