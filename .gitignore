@@ -7,3 +7,4 @@
 /index.js
 /logs
 /.github/workflows/deploy_tencent_scf.yml
+/.github/workflows/jd_global_mh.yml
