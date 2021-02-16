@@ -39,4 +39,8 @@ jobs:
           DD_BOT_SECRET: ${{ secrets.DD_BOT_SECRET }}
           JD_DEBUG: ${{ secrets.JD_DEBUG }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+<<<<<<< HEAD
           TG_USER_ID: ${{ secrets.TG_USER_ID }}              
+=======
+          TG_USER_ID: ${{ secrets.TG_USER_ID }}              
+>>>>>>> b019932e4616a12c7eb60318a4e595413562e84c
