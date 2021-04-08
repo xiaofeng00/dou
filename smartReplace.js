@@ -1,89 +1,283 @@
-//https://github.com/sazs34/MyActions
-
-const download = require("download");
-async function replaceWithSecrets(content, Secrets) {
-    if (!Secrets || !Secrets) return content;
-    const replacements = [];
-    await init_notify(Secrets, content, replacements);
-        if (Secrets.JD_COOKIE && content.indexOf("require('./jdCookie.js')") > 0) {
-            replacements.push({ key: "require('./jdCookie.js')", value: JSON.stringify(Secrets.JD_COOKIE.split("&")) });
-        }
-        if (Secrets.JD_COOKIE && content.indexOf('require("./jdCookie.js")') > 0) {
-            replacements.push({ key: 'require("./jdCookie.js")', value: JSON.stringify(Secrets.JD_COOKIE.split("&")) });
-        }
-        if (Secrets.DETECT_URL) {
-            replacements.push({ key: /url = \[\]/, value: "url = " + JSON.stringify(Secrets.DETECT_URL.split("\n")) });
-            replacements.push({ key: /price = \[\]/, value: "price = " + JSON.stringify(Secrets.DETECT_PRICE.split("\n")) });
-        }
-        if (Secrets.COOKIE_DKYD) {
-            replacements.push({ key: "$util.getdata(DUOKAN_COOKIE_KEY)", value: JSON.stringify(Secrets.COOKIE_DKYD.split("\n")[0]) });
-            replacements.push({ key: "$util.getdata(DUOKAN_DEVICE_ID_KEY)", value: JSON.stringify(Secrets.COOKIE_DKYD.split("\n")[1]) });
-        }
-        if (Secrets.COOKIE_ELM) {
-            replacements.push({ key: "sy.getdata(cookieKey)", value: JSON.stringify(Secrets.COOKIE_ELM) });
-        }        
-        if (Secrets.COOKIE_QQYD) {
-            replacements.push({ key: "$.getdata(qqreadurlKey)", value: JSON.stringify(Secrets.COOKIE_QQYD.split("\n")[0]) });
-            replacements.push({ key: "$.getdata(qqreadheaderKey)", value: JSON.stringify(Secrets.COOKIE_QQYD.split("\n")[1]) });
-            replacements.push({ key: "$.getdata(qqreadtimeurlKey)", value: JSON.stringify(Secrets.COOKIE_QQYD.split("\n")[2]) });
-            replacements.push({ key: "$.getdata(qqreadtimeheaderKey)", value: JSON.stringify(Secrets.COOKIE_QQYD.split("\n")[3]) });
-        }
-        await downloader(content);//检查所需额外js
-    /*
-        if (Secrets.MarketCoinToBeanCount && !isNaN(Secrets.MarketCoinToBeanCount)) {
-            let coinToBeanCount = parseInt(Secrets.MarketCoinToBeanCount);
-            if (coinToBeanCount >= 0 && coinToBeanCount <= 20 && content.indexOf("$.getdata('coinToBeans')") > 0) {
-                console.log("蓝币兑换京豆操作已注入");
-                replacements.push({ key: "$.getdata('coinToBeans')", value: coinToBeanCount });
-            }
-        }
-     */
-    return batchReplace(content, replacements);
+const axios = require("axios");
+const fs = require("fs");
+const replacements = [];
+var remoteContent;
+async function init(content) {
+    remoteContent = content;
+    await inject();
+    return batchReplace(remoteContent);
 }
-function batchReplace(content, replacements) {
+//#region 注入代码
+async function inject() {
+    await inject_jd();
+}
+
+async function inject_jd() {
+    if (!process.env.JD_COOKIE) return;
+    if (remoteContent.indexOf("function requireConfig()") >= 0 && remoteContent.indexOf("jd_bean_sign.js") >= 0) {
+        replacements.push({
+            key: "resultPath = err ? '/tmp/result.txt' : resultPath;",
+            value: `resultPath = err ? './tmp/result.txt' : resultPath;`,
+        });
+        replacements.push({
+            key: "JD_DailyBonusPath = err ? '/tmp/JD_DailyBonus.js' : JD_DailyBonusPath;",
+            value: `JD_DailyBonusPath = err ? './tmp/JD_DailyBonus.js' : JD_DailyBonusPath;`,
+        });
+        replacements.push({
+            key: "outPutUrl = err ? '/tmp/' : outPutUrl;",
+            value: `outPutUrl = err ? './tmp/' : outPutUrl;`,
+        });
+    }
+    ignore_jd();
+    await downloader_jd();
+    await downloader_notify();
+    await downloader_user_agents();
+}
+
+function ignore_jd() {
+    // 京东JOY禁用部分Cookie，以避免被频繁通知需要去种植啥的
+    if (process.env.IGNORE_COOKIE_JDJOYPET) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_JDJOYPET);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "if (jdCookieNode[item]) {",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(ignore_names)}.indexOf(item) == -1) {`,
+            });
+            console.log(`IGNORE_COOKIE_JDJOYPET已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_JDJOYPET填写有误,不禁用任何Cookie");
+        }
+    }
+    // 京喜农场禁用部分Cookie，以避免被频繁通知需要去种植啥的
+    if (process.env.IGNORE_COOKIE_JXNC) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_JXNC);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "if (jdCookieNode[item]) {",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(ignore_names)}.indexOf(item) == -1) {`,
+            });
+            console.log(`IGNORE_COOKIE_JXNC已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_JXNC填写有误,不禁用任何Cookie");
+        }
+    }
+    // 京喜工厂禁用部分Cookie，以避免被频繁通知需要去种植啥的
+    if (process.env.IGNORE_COOKIE_JXGC) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_JXGC);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "cookiesArr.push(jdCookieNode[item])",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(ignore_names)}.indexOf(item) == -1) cookiesArr.push(jdCookieNode[item])`,
+            });
+            console.log(`IGNORE_COOKIE_JXGC已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_JXGC填写有误,不禁用任何Cookie");
+        }
+    }
+    // 京东种豆得豆禁用部分Cookie，以避免黑号报错跳出的
+    if (process.env.IGNORE_COOKIE_ZDDD) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_ZDDD);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "cookiesArr.push(jdCookieNode[item])",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(ignore_names)}.indexOf(item) == -1) cookiesArr.push(jdCookieNode[item])`,
+            });
+            console.log(`IGNORE_COOKIE_ZDDD已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_ZDDD填写有误,不禁用任何Cookie");
+        }
+    }
+    // 口袋书店禁用部分Cookie
+    if (process.env.IGNORE_COOKIE_NIAN) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_NIAN);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "cookiesArr.push(jdCookieNode[item])",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(
+                    ignore_names
+                )}.indexOf(item) == -1) cookiesArr.push(jdCookieNode[item])`,
+            });
+            console.log(`IGNORE_COOKIE_NIAN已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_NIAN填写有误,不禁用任何Cookie");
+        }
+    }
+    // 京东农场禁用部分Cookie
+    if (process.env.IGNORE_COOKIE_JDNC) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_JDNC);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "cookiesArr.push(jdCookieNode[item])",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(
+                    ignore_names
+                )}.indexOf(item) == -1) cookiesArr.push(jdCookieNode[item])`,
+            });
+            console.log(`IGNORE_COOKIE_JDNC已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_JDNC填写有误,不禁用任何Cookie");
+        }
+    }
+    // 京东工厂禁用部分Cookie
+    if (process.env.IGNORE_COOKIE_JDGC) {
+        try {
+            var ignore_indexs = JSON.parse(process.env.IGNORE_COOKIE_JDGC);
+            var ignore_names = [];
+            ignore_indexs.forEach((it) => {
+                if (it == 1) {
+                    ignore_names.push("CookieJD");
+                } else {
+                    ignore_names.push("CookieJD" + it);
+                }
+            });
+            replacements.push({
+                key: "cookiesArr.push(jdCookieNode[item])",
+                value: `if (jdCookieNode[item] && ${JSON.stringify(ignore_names)}.indexOf(item) == -1) cookiesArr.push(jdCookieNode[item])`,
+            });
+            console.log(`IGNORE_COOKIE_JDGC已生效，将为您禁用${ignore_names}`);
+        } catch (e) {
+            console.log("IGNORE_COOKIE_JDGC填写有误,不禁用任何Cookie");
+        }
+    }
+}
+
+function batchReplace() {
     for (var i = 0; i < replacements.length; i++) {
-        content = content.replace(replacements[i].key, replacements[i].value);
+        remoteContent = remoteContent.replace(replacements[i].key, replacements[i].value);
     }
-    return content;
+    // console.log(remoteContent);
+    return remoteContent;
+}
+//#endregion
+
+//#region 文件下载
+
+async function downloader_jd() {
+    if (/require\(['"`]{1}.\/jdCookie.js['"`]{1}\)/.test(remoteContent))
+        await download("https://github.com/wuzhi03/MyActions/raw/main/jdCookie.js", "./jdCookie.js", "京东Cookies");
+    if (remoteContent.indexOf("jdFruitShareCodes") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdFruitShareCodes.js",
+            "./jdFruitShareCodes.js",
+            "东东农场互助码"
+        );
+    }
+    if (remoteContent.indexOf("jdPetShareCodes") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdPetShareCodes.js",
+            "./jdPetShareCodes.js",
+            "京东萌宠"
+        );
+    }
+    if (remoteContent.indexOf("jdPlantBeanShareCodes") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdPlantBeanShareCodes.js",
+            "./jdPlantBeanShareCodes.js",
+            "种豆得豆互助码"
+        );
+    }
+    if (remoteContent.indexOf("jdSuperMarketShareCodes") > 0)
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdSuperMarketShareCodes.js",
+            "./jdSuperMarketShareCodes.js",
+            "京小超互助码"
+        );
+    if (remoteContent.indexOf("jdFactoryShareCodes") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdFactoryShareCodes.js",
+            "./jdFactoryShareCodes.js",
+            "东东工厂互助码"
+        );
+    }
+    if (remoteContent.indexOf("jdDreamFactoryShareCodes") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdDreamFactoryShareCodes.js",
+            "./jdDreamFactoryShareCodes.js",
+            "京喜工厂互助码"
+        );
+    }
+    if (remoteContent.indexOf("new Env('京喜农场')") > 0) {
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdJxncTokens.js",
+            "./jdJxncTokens.js",
+            "京喜农场Token"
+        );
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/jdJxncShareCodes.js",
+            "./jdJxncShareCodes.js",
+            "京喜农场分享码"
+        );
+        await download(
+            "https://github.com/wuzhi03/MyActions/raw/main/USER_AGENTS.js",
+            "./USER_AGENTS.js",
+            "USER_AGENTS"
+        );
+    }
 }
 
-async function init_notify(Secrets, content, replacements) {
-    if (!Secrets.PUSH_KEY && !Secrets.BARK_PUSH && !Secrets.TG_BOT_TOKEN) {
-        if (content.indexOf("require('./sendNotify')") > 0) {
-            replacements.push({
-                key: "require('./sendNotify')",
-                value:
-                    "{sendNotify:function(){},serverNotify:function(){},BarkNotify:function(){},tgBotNotify:function(){}}",
-            });
-        }
-    }/* else {
-        await download_notify();
-        if (content.indexOf("京东多合一签到") > 0 && content.indexOf("@NobyDa") > 0) {
-            console.log("京东多合一签到通知注入成功");
-            replacements.push({
-                key: "var LogDetails = false;",
-                value: `const lxk0301Notify = require('./sendNotify');var LogDetails = false;`,
-            });
-            replacements.push({
-                key: `if (!$nobyda.isNode) $nobyda.notify("", "", Name + one + two + three + four + disa + notify);`,
-                value: `console.log("通知开始");lxk0301Notify.sendNotify("京东多合一签到", one + two + three + notify);console.log("通知结束");`,
-            });
-        }
-    }*/
-}
-async function downloader(content) {
-    if (content.indexOf("jdFruitShareCodes") > 0) {
-        await download_jdFruit();
-    }
+async function downloader_notify() {
+    await download("https://github.com/wuzhi03/MyActions/raw/main/sendNotify.js", "./sendNotify.js", "统一通知");
 }
 
-async function download_notify() {
-    await download("https://github.com/lxk0301/scripts/raw/master/sendNotify.js", "./", {
-        filename: "sendNotify.js",
-    });
-    console.log("下载通知代码完毕");
+async function downloader_user_agents() {
+    await download("https://github.com/wuzhi03/MyActions/raw/main/USER_AGENTS.js", "./USER_AGENTS.js", "云端UA");
 }
+
+async function download(url, path, target) {
+    let response = await axios.get(url);
+    let fcontent = response.data;
+    await fs.writeFileSync(path, fcontent, "utf8");
+    console.log(`下载${target}完毕`);
+}
+//#endregion
 
 module.exports = {
-    replaceWithSecrets,
+    inject: init,
 };
