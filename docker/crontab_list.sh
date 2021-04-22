@@ -22,7 +22,8 @@
 10 15 * * * node /scripts/jd_shoplottery.js >> /scripts/logs/jd_shoplottery.log 2>&1
 #jd_jump_jump
 10 20 * * * node /scripts/jd_jump_jump.js >> /scripts/logs/jd_jump_jump.log 2>&1
-
+#jd_health
+30 0-23/5 * * * node /scripts/jd_health.js >> /scripts/logs/jd_health.log 2>&1
 ##############长期活动##############
 # 签到
 0 0,18 * * * cd /scripts && node jd_bean_sign.js >> /scripts/logs/jd_bean_sign.log 2>&1
@@ -69,7 +70,7 @@
 # 东东工厂
 36 */4 * * * node /scripts/jd_jdfactory.js >> /scripts/logs/jd_jdfactory.log 2>&1
 # 十元街
-36 18 * * * node /scripts/jd_Newsyj.js >> /scripts/logs/jd_Newsyj.log 2>&1
+36 0-23/4 * * * node /scripts/jd_syj.js >> /scripts/logs/jd_syj.log 2>&1
 # 京东快递签到
 23 1 * * * node /scripts/jd_kd.js >> /scripts/logs/jd_kd.log 2>&1
 # 京东汽车(签到满500赛点可兑换500京豆)
