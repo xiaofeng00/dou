@@ -173,8 +173,8 @@ async function doCultureBean() {
 async function stealFriendWater() {
   await stealFriendList();
   if ($.stealFriendList && $.stealFriendList.code === '0') {
-    if ($.stealFriendList.data.tips) {
-      console.log('偷取好友营养液今日已达上限');
+    if ($.stealFriendList.data && $.stealFriendList.data.tips) {
+      console.log('\n\n今日偷取好友营养液已达上限\n\n');
       return
     }
     if ($.stealFriendList.data && $.stealFriendList.data.friendInfoList && $.stealFriendList.data.friendInfoList.length > 0) {
@@ -534,7 +534,7 @@ async function plantBeanIndex() {
 function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
-    $.get({url: "https://gitee.com/Soundantony/RandomShareCode/raw/master/JD_Plant_Bean.json",headers:{
+    $.get({url: "https://cdn.jsdelivr.net/gh/wuzhi-docker1/RandomShareCode@main/JD_Plant_Bean.json",headers:{
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/87.0.4280.88"
       }}, async (err, resp, data) => {
       try {

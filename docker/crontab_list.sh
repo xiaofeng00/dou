@@ -14,8 +14,6 @@
 1 9,12,19 * * * node /scripts/jd_super5g.js >> /scripts/logs/jd_super5g.log 2>&1
 #jd_oneplus盲盒
 1 3,13 * * * node /scripts/jd_oneplus.js >> /scripts/logs/jd_oneplus.log 2>&1
-#jd_xmf
-10 10 25-27 3 * node /scripts/jd_xmf.js >> /scripts/logs/jd_xmf.log 2>&1
 #极速版红包
 40 0,8 * * * node /scripts/jd_speed_redpocke.js >> /scripts/logs/jd_speed_redpocke.log 2>&1
 #jd_shoplottery
@@ -23,7 +21,17 @@
 #jd_jump_jump
 10 20 * * * node /scripts/jd_jump_jump.js >> /scripts/logs/jd_jump_jump.log 2>&1
 #jd_health
-30 0-23/5 * * * node /scripts/jd_health.js >> /scripts/logs/jd_health.log 2>&1
+13 1,22 * * * node /scripts/jd_health.js >> /scripts/logs/jd_health.log 2>&1
+#jd_health_collect
+5-45/20 * * * * node /scripts/jd_health_collect.js >> /scripts/logs/jd_health_collect.log 2>&1
+#jd_market_lottery
+4 10,19 * * * node /scripts/jd_market_lottery.js >> /scripts/logs/jd_market_lottery.log 2>&1
+#jd_tcl
+23 1,7 * * * node /scripts/jd_tcl.js >> /scripts/logs/jd_tcl.log 2>&1
+#jd_jintie
+10 0 * * * node /scripts/jd_jintie.js >> /scripts/logs/jd_jintie.log 2>&1
+#jd_super_redrain
+1 0-23/1 * * * node /scripts/jd_super_redrain.js >> /scripts/logs/jd_super_redrain.log 2>&1
 ##############长期活动##############
 # 签到
 0 0,18 * * * cd /scripts && node jd_bean_sign.js >> /scripts/logs/jd_bean_sign.log 2>&1
