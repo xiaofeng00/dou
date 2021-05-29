@@ -1,13 +1,16 @@
-name: 京喜工厂
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: 金榜创造营
 
 on:
     workflow_dispatch:
     schedule:
-        - cron: "0 */1 * * *"
+        - cron: "10 9,21 * * *"
     watch:
         types: [started]
     repository_dispatch:
-        types: jd_dreamFactory
+        types: jd_gold_creator
 
 jobs:
     build:
@@ -23,7 +26,7 @@ jobs:
             - name: 安装依赖包
               run: |
                   npm install
-            - name: "运行【京喜工厂】"
+            - name: "运行【金榜创造营】"
               run: |
                   node onlyOneExecute.js
               env:
@@ -44,11 +47,4 @@ jobs:
                   QYWX_AM: ${{ github.event.client_payload.QYWX_AM || secrets.QYWX_AM }}
                   PUSH_PLUS_TOKEN: ${{ github.event.client_payload.PUSH_PLUS_TOKEN || secrets.PUSH_PLUS_TOKEN }}
                   PUSH_PLUS_USER: ${{ github.event.client_payload.PUSH_PLUS_USER || secrets.PUSH_PLUS_USER }}
-                  DREAMFACTORY_NOTIFY_CONTROL: ${{ github.event.client_payload.DREAMFACTORY_NOTIFY_CONTROL || secrets.DREAMFACTORY_NOTIFY_CONTROL }}
-                  DREAM_FACTORY_SHARE_CODES: ${{ github.event.client_payload.DREAM_FACTORY_SHARE_CODES || secrets.DREAM_FACTORY_SHARE_CODES }}
-                  SYNCURL: https://github.com/wuzhi03/MyActions/raw/main/jd_dreamFactory.js
-                  #专属配置
-                  IGNORE_COOKIE_JXGC: ${{ github.event.client_payload.IGNORE_COOKIE_JXGC || secrets.IGNORE_COOKIE_JXGC }} #京喜工厂禁用某些cookie的执行,因为通知太烦了呀,比如要禁用第2和第四个的执行,则填入[2,4]即可,包含中括号哦
-                  DREAMFACTORY_FORBID_ACCOUNT: ${{ github.event.client_payload.DREAMFACTORY_FORBID_ACCOUNT || secrets.DREAMFACTORY_FORBID_ACCOUNT }} #京喜工厂禁用某些cookie的执行,因为通知太烦了呀,比如要禁用第2和第四个的执行,则填入[2,4]即可,包含中括号哦
-                  TUAN_ACTIVEID: ${{ github.event.client_payload.TUAN_ACTIVEID || secrets.TUAN_ACTIVEID }} #京喜工厂自定义开团ID
-      
+                  SYNCURL: https://github.com/wuzhi03/MyActions/raw/main/jd_gold_creator.js
