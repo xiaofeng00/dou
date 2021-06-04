@@ -133,7 +133,11 @@ function taskPostUrl(functionId,body) {
   }
 }
 function getInfo(inviteId, flag = false) {
+<<<<<<< HEAD
   let body = {"lbsCity":"19","realLbsCity":"1601","inviteId":inviteId,"headImg":"","userName":""}
+=======
+  let body = {"lbsCity":"13","realLbsCity":"1099","inviteId":inviteId,"headImg":"","userName":""}
+>>>>>>> c4a7c389c52d81f7c0fd6fedd16cfc29e5b0e916
   return new Promise((resolve) => {
     $.post(taskPostUrl("city_getHomeData",body), async (err, resp, data) => {
       try {
