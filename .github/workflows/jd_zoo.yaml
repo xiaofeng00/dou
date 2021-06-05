@@ -6,11 +6,7 @@ name: 动物连萌
 on:
     workflow_dispatch:
     schedule:
-<<<<<<< HEAD
-        - cron: "0 * * * *"
-=======
         - cron: "0 0-23/2 * * *"
->>>>>>> c4a7c389c52d81f7c0fd6fedd16cfc29e5b0e916
     watch:
         types: [started]
     repository_dispatch:
